@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual Interactivo LSSD</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chosen Palette: Dynamic LSSD (Dark Slate, Vibrant Indigo, Subtle Accents) -->
+    <!-- Application Structure Plan: Se ha diseñado una aplicación de página única (SPA) con una barra de navegación lateral fija en escritorios y colapsable en móviles, y un área de contenido principal dinámica. Este diseño tipo panel de control (dashboard) fue elegido para ofrecer acceso rápido y no lineal a información específica durante el juego de rol. La interacción principal es la navegación entre secciones sin recargar la página y una función de búsqueda en tiempo real para los códigos de radio, lo que mejora drásticamente la usabilidad. Se ha añadido un botón de menú para la navegación móvil. Las secciones se agrupan temáticamente para una mejor organización: Introducción, Códigos de Radio (interactivo), Protocolos Operativos, Uso de la Fuerza (con visualización mejorada), Maniobra PIT, Equipamiento, Derechos y Reglamento, y Requisitos de Ingreso. -->
+    <!-- Visualization & Content Choices: Report Info: Lista de 10-Códigos -> Goal: Organizar/Buscar -> Viz: Lista filtrable con barra de búsqueda -> Interaction: El usuario escribe y la lista se actualiza en tiempo real -> Justification: Es la forma más rápida de encontrar un código específico. | Report Info: Uso de la Fuerza -> Goal: Organizar/Informar -> Viz: Diagrama de flujo visual con HTML/CSS (lista escalonada con colores de énfasis) -> Interaction: Estático pero visualmente claro -> Justification: Representa la escalada de fuerza de manera intuitiva. | Report Info: Vehículos, Equipamiento, Derechos, Reglamento, Requisitos -> Goal: Informar/Listar -> Viz: Cuadrícula de tarjetas con iconos/emojis y listas HTML estructuradas -> Interaction: Estática, pero con diseño de tarjetas mejorado -> Justification: Presentación clara y legible de directrices y elementos. NO se utilizan Chart.js ni Plotly.js ya que el informe no contiene datos cuantitativos que se beneficien de gráficos. Se han añadido más emojis y se han mejorado los estilos de los contenedores para un aspecto más "LSSD". -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        .nav-link {
+            @apply flex items-center py-3 px-4 rounded-lg transition-colors duration-200 hover:bg-slate-700;
+        }
+        .nav-link.active {
+            @apply bg-indigo-600 text-white;
+        }
+        .page-section {
+            display: none;
+        }
+        .page-section.active {
+            display: block;
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #94a3b8;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+        @media (max-width: 1023px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease-in-out;
+            }
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            .main-content {
+                margin-left: 0 !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800">
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <aside id="sidebar" class="w-64 bg-slate-900 text-slate-200 flex flex-col p-4 fixed h-full overflow-y-auto z-50 lg:translate-x-0 sidebar">
+            <div class="flex items-center mb-8">
+                <span class="text-3xl font-extrabold text-indigo-500 mr-2">🚔</span>
+                <h1 class="text-2xl font-bold text-white">LSSD Manual</h1>
+            </div>
+            <nav class="flex-grow">
+                <ul>
+                    <li class="mb-2"><a href="#intro" class="nav-link active"><span class="mr-3 text-lg">🏠</span> Introducción</a></li>
+                    <li class="mb-2"><a href="#codigos" class="nav-link"><span class="mr-3 text-lg">📻</span> Códigos de Radio</a></li>
+                    <li class="mb-2"><a href="#protocolos-operativos" class="nav-link"><span class="mr-3 text-lg">🚨</span> Protocolos Operativos</a></li>
+                    <li class="mb-2"><a href="#fuerza" class="nav-link"><span class="mr-3 text-lg">🛡️</span> Uso de la Fuerza</a></li>
+                    <li class="mb-2"><a href="#pit" class="nav-link"><span class="mr-3 text-lg">🚗</span> Maniobra PIT</a></li>
+                    <li class="mb-2"><a href="#equipamiento" class="nav-link"><span class="mr-3 text-lg">🎒</span> Equipamiento</a></li>
+                    <li class="mb-2"><a href="#derechos-reglamento" class="nav-link"><span class="mr-3 text-lg">⚖️</span> Derechos y Reglamento</a></li>
+                    <li class="mb-2"><a href="#requisitos" class="nav-link"><span class="mr-3 text-lg">✅</span> Requisitos de Ingreso</a></li>
+                </ul>
+            </nav>
+            <div class="mt-4 text-xs text-slate-500">
+                <p>Versión 1.0 | Julio 2025</p>
+                <p>"Protegiendo a Los Santos, Sirviendo con Honor"</p>
+                <p class="mt-2">Normativas: <a href="https://docs.google.com/document/d/1d6iLS2xQyjF-VAI9qUrekbdKS0vOvEE0MIqAJC6Mpfw/edit?usp=sharing" target="_blank" class="text-indigo-400 hover:underline">LosSantosRP</a></p>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col lg:ml-64 main-content">
+            <!-- Top Bar for Mobile Menu -->
+            <header class="bg-slate-900 text-white p-4 flex items-center justify-between lg:hidden">
+                <button id="menuButton" class="text-white focus:outline-none">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                </button>
+                <h1 class="text-xl font-bold">Manual LSSD</h1>
+                <div class="w-6"></div>
+            </header>
+
+            <main class="flex-1 p-8 overflow-y-auto">
+                <!-- Sección de Introducción -->
+                <section id="intro" class="page-section active">
+                    <h2 class="text-4xl font-extrabold mb-4 text-slate-900 border-b-4 border-indigo-600 pb-2">Manual de Operaciones LSSD</h2>
+                    <p class="text-lg text-slate-700 mb-6">Bienvenido al manual interactivo del Los Santos Sheriff Department. Esta herramienta está diseñada para proporcionarte acceso rápido y eficiente a toda la información esencial que necesitas para operar con profesionalismo y eficacia en el campo de Los Santos Roleplay.</p>
+                    <div class="bg-white p-6 rounded-lg shadow-xl border border-slate-200 transform hover:scale-105 transition-transform duration-300">
+                        <h3 class="text-2xl font-bold mb-3 text-indigo-700">Nuestra Misión 🌟</h3>
+                        <p class="text-slate-700 leading-relaxed">Nuestra misión es clara: <span class="font-semibold text-indigo-600">proteger a los ciudadanos de Los Santos, mantener el orden público y servir con honor e integridad.</span> Cada acción que realices como miembro del LSSD contribuye a la seguridad y estabilidad de nuestra comunidad. Utiliza este manual para asegurarte de que tus acciones siempre se alineen con nuestros valores y procedimientos.</p>
+                    </div>
+                </section>
+
+                <!-- Sección de Códigos de Radio -->
+                <section id="codigos" class="page-section">
+                    <h2 class="text-4xl font-extrabold mb-4 text-slate-900 border-b-4 border-indigo-600 pb-2">Glosario de Códigos de Radio 📻</h2>
+                    <p class="text-lg text-slate-700 mb-6">La comunicación clara y rápida es vital en todas las operaciones del LSSD. Utiliza el buscador para encontrar códigos específicos por número o palabra clave. Escribe para filtrar la lista en tiempo real y agilizar tus comunicaciones.</p>
+                    <div class="mb-6">
+                        <input type="text" id="searchInput" class="w-full p-3 border border-slate-300 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-200" placeholder="Buscar código o significado (ej: '10-50' o 'persecución')...">
+                    </div>
+                    <div id="codesList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    </div>
+                </section>
+
+                <!-- Sección de Protocolos Operativos -->
+                <section id="protocolos-operativos" class="page-section">
+                    <h2 class="text-4xl font-extrabold mb-4 text-slate-900 border-b-4 border-indigo-600 pb-2">Protocolos Operativos Clave 🚨</h2>
+                    <p class="text-lg text-slate-700 mb-6">Esta sección detalla los procedimientos esenciales para el despliegue de vehículos, las etapas de operación y los códigos de emergencia, asegurando una respuesta coordinada y efectiva en todas las situaciones.</p>
+
+                    <div class="bg-white p-6 rounded-lg shadow-xl border border-slate-200 mb-6 transform hover:scale-105 transition-transform duration-300">
+                        <h3 class="text-2xl font-bold mb-3 text-indigo-700">🚓 Vehículo Oficial Obligatorio</h3>
+                        <p class="mb-4 text-slate-700">Todos los oficiales deben patrullar obligatoriamente en el vehículo oficial asignado por la División de Patrullaje, salvo autorización directa para uso de vehículos especiales (UCV, SUV, SWAT, etc.).</p>
+                        <p class="font-semibold text-slate-800 text-xl">LSSD Cruiser <span class="text-indigo-500">(Stanier o modelo designado por la jefatura)</span></p>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-lg shadow-xl border border-slate-200 mb-6 transform hover:scale-105 transition-transform duration-300">
+                        <h3 class="text-2xl font-bold mb-3 text-indigo-700">🔧 Etapas de Operación (Stages)</h3>
+                        <ul class="list-disc list-inside space-y-2 text-slate-700">
+                            <li><span class="font-semibold text-indigo-600">Stage 1: Patrullaje Preventivo 🛣️</span> - Presencia activa, sin amenaza directa. Mantente atento y visible.</li>
+                            <li><span class="font-semibold text-orange-600">Stage 2: Situación en Desarrollo ⚠️</span> - Se requiere precaución, posible intervención. Riesgo latente.</li>
+                            <li><span class="font-semibold text-red-600">Stage 3: Persecución o Acción Crítica 🚓</span> - Emergencia activa, persecución o intervención inmediata. Máxima alerta.</li>
+                        </ul>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-lg shadow-xl border border-slate-200 transform hover:scale-105 transition-transform duration-300">
+                        <h3 class="text-2xl font-bold mb-3 text-indigo-700">📡 Códigos de Emergencia</h3>
+                        <ul class="list-disc list-inside space-y-2 text-slate-700">
+                            <li><span class="font-semibold">Código 1:</span> Desplazamiento normal, sin luces ni sirenas. 🚫</li>
+                            <li><span class="font-semibold">Código 2:</span> Urgente pero sin sirena, solo luces (balizas activas). 🚨</li>
+                            <li><span class="font-semibold">Código 3:</span> Prioridad máxima, luces y sirena activadas. 🚔🔊</li>
+                        </ul>
+                    </div>
+                </section>
+
+                <!-- Sección de Uso de la Fuerza -->
+                <section id="fuerza" class="page-section">
+                    <h2 class="text-4xl font-extrabold mb-4 text-slate-900 border-b-4 border-indigo-600 pb-2">Escala de Uso de la Fuerza 💥</h2>
+                    <p class="text-lg text-slate-700 mb-6">La Escala de Uso de la Fuerza del Los Santos Sheriff Department está diseñada para asegurar que toda acción del oficial sea proporcional a la amenaza y esté justificada legal y tácticamente. Se aplica siempre con responsabilidad y bajo estricta supervisión.</p>
+                    <div class="relative p-8 bg-white rounded-lg shadow-xl border border-slate-200">
+                        <div class="absolute left-1/2 top-0 bottom-0 w-1 bg-slate-300 transform -translate-x-1/2"></div>
+                        
+                        <div class="relative mb-8 flex items-center">
+                            <div class="w-1/2 pr-8 text-right">
+                                <div class="bg-indigo-50 p-4 rounded-lg shadow-md border border-indigo-200">
+                                    <h4 class="font-bold text-xl text-indigo-700">1. Presencia Policial</h4>
+                                    <p class="text-sm text-slate-700">La sola presencia uniformada disuade conductas delictivas. Patrullaje, contacto visual y postura firme.</p>
+                                </div>
+                            </div>
+                            <div class="w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center absolute left-1/2 transform -translate-x-1/2 z-10 font-bold text-lg border-2 border-white shadow-lg">1</div>
+                        </div>
+                        <div class="relative mb-8 flex items-center">
+                            <div class="w-1/2 pl-8 text-left ml-auto">
+                                <div class="bg-indigo-50 p-4 rounded-lg shadow-md border border-indigo-200">
+                                    <h4 class="font-bold text-xl text-indigo-700">2. Comunicación Verbal</h4>
+                                    <p class="text-sm text-slate-700">Órdenes claras y firmes. Método preferido para obtener el control de una situación.</p>
+                                </div>
+                            </div>
+                            <div class="w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center absolute left-1/2 transform -translate-x-1/2 z-10 font-bold text-lg border-2 border-white shadow-lg">2</div>
+                        </div>
+                        <div class="relative mb-8 flex items-center">
+                            <div class="w-1/2 pr-8 text-right">
+                                <div class="bg-indigo-50 p-4 rounded-lg shadow-md border border-indigo-200">
+                                    <h4 class="font-bold text-xl text-indigo-700">3. Control de Contacto</h4>
+                                    <p class="text-sm text-slate-700">Contacto físico mínimo (sujeción del brazo, guía manual) para dirigir o contener al sujeto sin agredir.</p>
+                                </div>
+                            </div>
+                            <div class="w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center absolute left-1/2 transform -translate-x-1/2 z-10 font-bold text-lg border-2 border-white shadow-lg">3</div>
+                        </div>
+                        <div class="relative mb-8 flex items-center">
+                            <div class="w-1/2 pl-8 text-left ml-auto">
+                                <div class="bg-orange-50 p-4 rounded-lg shadow-md border border-orange-200">
+                                    <h4 class="font-bold text-xl text-orange-700">4. Control Físico Duro</h4>
+                                    <p class="text-sm text-slate-700">Técnicas de inmovilización, reducción por fuerza manual o derribo controlado ante sujetos agresivos.</p>
+                                </div>
+                            </div>
+                            <div class="w-10 h-10 rounded-full bg-orange-500 text-white flex items-center justify-center absolute left-1/2 transform -translate-x-1/2 z-10 font-bold text-lg border-2 border-white shadow-lg">4</div>
+                        </div>
+                        <div class="relative mb-8 flex items-center">
+                            <div class="w-1/2 pr-8 text-right">
+                                <div class="bg-orange-50 p-4 rounded-lg shadow-md border border-orange-200">
+                                    <h4 class="font-bold text-xl text-orange-700">5. Tácticas No Letales</h4>
+                                    <p class="text-sm text-slate-700">Uso de herramientas como bastones extensibles, tasers, spray OC, escopetas de beanbags o fuerza contundente sin intención letal.</p>
+                                </div>
+                            </div>
+                            <div class="w-10 h-10 rounded-full bg-orange-500 text-white flex items-center justify-center absolute left-1/2 transform -translate-x-1/2 z-10 font-bold text-lg border-2 border-white shadow-lg">5</div>
+                        </div>
+                        <div class="relative flex items-center">
+                            <div class="w-1/2 pl-8 text-left ml-auto">
+                                <div class="bg-red-50 p-4 rounded-lg shadow-md border border-red-200">
+                                    <h4 class="font-bold text-xl text-red-700">6. Fuerza Letal</h4>
+                                    <p class="text-sm text-slate-700">Cuando hay un <span class="font-semibold">riesgo inminente de muerte o lesiones graves</span>, se autoriza el uso de armas de fuego u otra fuerza letal. Solo como <span class="font-semibold">último recurso</span>.</p>
+                                </div>
+                            </div>
+                            <div class="w-10 h-10 rounded-full bg-red-600 text-white flex items-center justify-center absolute left-1/2 transform -translate-x-1/2 z-10 font-bold text-lg border-2 border-white shadow-lg">6</div>
+                        </div>
+                    </div>
+                    <p class="text-sm text-slate-600 mt-6 text-center">⚠️ Todo uso de la fuerza debe ser reportado y justificado ante supervisión. Se aplican sanciones severas en caso de abuso o negligencia.</p>
+                </section>
+                
+                <!-- Sección de Maniobra PIT -->
+                <section id="pit" class="page-section">
+                    <h2 class="text-4xl font-extrabold mb-4 text-slate-900 border-b-4 border-indigo-600 pb-2">Maniobra PIT 🚗💨</h2>
+                    <p class="text-lg text-slate-700 mb-6">La <span class="font-semibold">Maniobra PIT</span> (Precision Immobilization Technique) es una técnica táctica utilizada por oficiales entrenados del LSSD para detener vehículos en movimiento de manera controlada y segura durante una persecución.</p>
+                    <div class="bg-white p-6 rounded-lg shadow-xl border border-slate-200 transform hover:scale-105 transition-transform duration-300">
+                        <h3 class="text-2xl font-bold mb-3 text-indigo-700">📋 Reglas de Uso de la Maniobra PIT</h3>
+                        <ul class="list-disc list-inside space-y-3 text-slate-700">
+                            <li><span class="font-semibold text-green-600">✔️ Velocidad permitida:</span> Solo puede ejecutarse si el vehículo objetivo circula entre <span class="font-bold">20 km/h y 100 km/h</span>. A velocidades menores no es efectiva, y a mayores puede ser letal.</li>
+                            <li><span class="font-semibold text-red-600">❌ Prohibida en zonas urbanas:</span> <span class="font-bold">No se permite su uso dentro de ciudad, barrios residenciales o zonas con peatones.</span> Solo puede aplicarse en autopistas, carreteras rurales y zonas abiertas donde no haya riesgo para civiles.</li>
+                            <li><span class="font-semibold text-orange-600">⚠️ Efecto esperado:</span> La maniobra puede <span class="font-bold">hacer perder el control o volcar</span> el vehículo del sospechoso. Se utiliza únicamente cuando detener al fugitivo es <span class="font-bold">prioridad inmediata por el nivel de amenaza</span> que representa.</li>
+                        </ul>
+                        <p class="text-sm text-slate-600 mt-6 text-center">🛑 <span class="font-semibold">Importante:</span> Solo oficiales autorizados y capacitados pueden ejecutar esta maniobra. Su uso indebido puede resultar en sanciones disciplinarias o suspensión.</p>
+                    </div>
+                </section>
+                
+                <!-- Sección de Equipamiento -->
+                <section id="equipamiento" class="page-section">
+                    <h2 class="text-4xl font-extrabold mb-4 text-slate-900 border-b-4 border-indigo-600 pb-2">Equipamiento del Oficial 🎒</h2>
+                    <p class="text-lg text-slate-700 mb-6">Tu equipamiento es vital para tu seguridad y la de los ciudadanos. Asegúrate de tener siempre el equipo adecuado y en buen estado. Esta sección detalla tanto el equipo personal estándar como el disponible en el maletero de tu patrulla.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div class="bg-white p-6 rounded-lg shadow-xl border border-slate-200 transform hover:scale-105 transition-transform duration-300">
+                            <h3 class="text-2xl font-bold mb-4 text-indigo-700">👤 Equipo Personal Estándar</h3>
+                            <ul class="list-disc list-inside space-y-2 text-slate-700">
+                                <li>🔫 <span class="font-semibold">Glock 18</span> – Pistola de servicio estándar.</li>
+                                <li>🔦 <span class="font-semibold">Linterna táctica</span> – Para operativos nocturnos o zonas sin visibilidad.</li>
+                                <li>🔗 <span class="font-semibold">Esposas</span> – Para detención y traslado de sospechosos.</li>
+                                <li>📝 <span class="font-semibold">Libreta y bolígrafo</span> – Para reportes rápidos y anotaciones en terreno.</li>
+                                <li>💻 <span class="font-semibold">MDT (Mobile Data Terminal)</span> – Acceso a bases de datos, registros de placas y fichas criminales.</li>
+                                <li>🪪 <span class="font-semibold">Identificación Policial</span> – Credencial oficial del LSSD, debe estar visible o disponible.</li>
+                            </ul>
+                        </div>
+                        <div class="bg-white p-6 rounded-lg shadow-xl border border-slate-200 transform hover:scale-105 transition-transform duration-300">
+                            <h3 class="text-2xl font-bold mb-4 text-indigo-700">🚔 Equipo en el Maletero de Patrulla</h3>
+                            <p class="mb-3 text-slate-700">Utilizado según el escenario, bajo criterio del oficial y con responsabilidad:</p>
+                            <ul class="list-disc list-inside space-y-2 text-slate-700">
+                                <li>🛑 <span class="font-semibold">Pinchos</span> – Para detención controlada de vehículos en fuga.</li>
+                                <li>🟠 <span class="font-semibold">Conos de tráfico</span> – Señalización de accidentes, controles o escenas activas.</li>
+                                <li>🔫 <span class="font-semibold">MP5</span> – Subfusil para situaciones tácticas.</li>
+                                <li>🔷 <span class="font-semibold">Escopeta Fabarm FP6</span> – Ideal para espacios cerrados o alta amenaza.</li>
+                                <li>🦺 <span class="font-semibold">Chaleco alternativo / táctico</span> – Según función (SWAT, Tráfico, Antinarcóticos, etc.).</li>
+                                <li>🧪 <span class="font-semibold">Kit de Investigación</span> – Para levantamiento de pruebas, fotografía y análisis inicial.</li>
+                                <li>🩹 <span class="font-semibold">Medkit</span> – Solo si el oficial tiene formación médica o rol asignado (unidad médica, K9, etc.).</li>
+                            </ul>
+                            <p class="text-sm text-slate-600 mt-4 text-center">🛑 <span class="font-semibold">Nota:</span> El uso de equipo táctico (MP5, escopeta, pinchos) debe ser <span class="font-bold">registrado y justificado</span>. La extracción sin motivo puede acarrear <span class="font-bold">sanciones administrativas o suspensión</span>.</p>
+                        </div>
+                    </div>
+                    <div class="mt-8">
+                        <h3 class="text-3xl font-extrabold mb-4 text-slate-900 border-b-2 border-indigo-400 pb-1">Vehículos y Unidades Tácticas 🚓🚁🐕</h3>
+                        <p class="text-lg text-slate-700 mb-6">Contamos con una flota diversa de vehículos y unidades especializadas para cada tipo de operación. Conoce sus roles y capacidades para desplegar el recurso adecuado en cada situación.</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div class="bg-white p-6 rounded-lg shadow-md border border-slate-200">
+                                <h4 class="text-xl font-bold mb-2 text-indigo-700">CRU: Cruiser 🚓</h4>
+                                <p class="text-slate-700">Vehículo estándar de patrullaje. Rápido, resistente y listo para cualquier situación.</p>
+                            </div>
+                            <div class="bg-white p-6 rounded-lg shadow-md border border-slate-200">
+                                <h4 class="text-xl font-bold mb-2 text-indigo-700">SUV: Unidad Todo Terreno 🚙</h4>
+                                <p class="text-slate-700">Ideal para terrenos difíciles, zonas rurales y operativos prolongados.</p>
+                            </div>
+                            <div class="bg-white p-6 rounded-lg shadow-md border border-slate-200">
+                                <h4 class="text-xl font-bold mb-2 text-indigo-700">UCV: Vehículo No Identificado 🚗</h4>
+                                <p class="text-slate-700">Para tareas encubiertas, vigilancia y seguimientos discretos.</p>
+                            </div>
+                            <div class="bg-white p-6 rounded-lg shadow-md border border-slate-200">
+                                <h4 class="text-xl font-bold mb-2 text-indigo-700">SWAT: Unidad Táctica Especial 🛡️</h4>
+                                <p class="text-slate-700">Intervenciones de alto riesgo, toma de rehenes y redadas.</p>
+                            </div>
+                            <div class="bg-white p-6 rounded-lg shadow-md border border-slate-200">
+                                <h4 class="text-xl font-bold mb-2 text-indigo-700">NARCO: Unidad Antinarcóticos 💊</h4>
+                                <p class="text-slate-700">Operativos contra el tráfico de drogas, investigaciones y allanamientos.</p>
+                            </div>
+                            <div class="bg-white p-6 rounded-lg shadow-md border border-slate-200">
+                                <h4 class="text-xl font-bold mb-2 text-indigo-700">INV: Investigaciones Criminales 🔍</h4>
+                                <p class="text-slate-700">Detectives encargados de resolver casos complejos y delitos mayores.</p>
+                            </div>
+                            <div class="bg-white p-6 rounded-lg shadow-md border border-slate-200">
+                                <h4 class="text-xl font-bold mb-2 text-indigo-700">AIR: Unidad Aérea 🚁</h4>
+                                <p class="text-slate-700">Helicópteros de apoyo aéreo en persecuciones, búsquedas y vigilancia.</p>
+                            </div>
+                            <div class="bg-white p-6 rounded-lg shadow-md border border-slate-200">
+                                <h4 class="text-xl font-bold mb-2 text-indigo-700">K9: Unidad Canina 🐕</h4>
+                                <p class="text-slate-700">Perros entrenados para detección de drogas, armas y rastreo de sospechosos.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Sección de Derechos y Reglamento -->
+                <section id="derechos-reglamento" class="page-section">
+                    <h2 class="text-4xl font-extrabold mb-4 text-slate-900 border-b-4 border-indigo-600 pb-2">Derechos del Detenido y Reglamento Interno ⚖️</h2>
+                    <p class="text-lg text-slate-700 mb-6">Esta sección aborda los derechos fundamentales de los ciudadanos bajo custodia y las normas de conducta obligatorias para todos los miembros del LSSD, garantizando un servicio ético y profesional.</p>
+                    <div class="space-y-8">
+                        <div class="bg-white p-6 rounded-lg shadow-xl border border-slate-200 transform hover:scale-105 transition-transform duration-300">
+                            <h3 class="text-2xl font-bold mb-3 text-indigo-700">⚖️ Derechos del Detenido</h3>
+                            <ul class="list-disc list-inside space-y-2 text-slate-700">
+                                <li><span class="font-semibold">Derecho a ser informado:</span> Motivos de la detención.</li>
+                                <li><span class="font-semibold">Derecho a un abogado:</span> Solo si el arresto no es en flagrancia.</li>
+                                <li><span class="font-semibold">Derecho al silencio:</span> No autoincriminarse.</li>
+                                <li><span class="font-semibold">Derecho a no ser maltratado:</span> Protección contra abusos.</li>
+                                <li><span class="font-semibold">Derecho a comunicación:</span> Derecho a notificar su detención a un familiar.</li>
+                                <li><span class="font-semibold">Derecho a atención médica:</span> Si es necesario.</li>
+                            </ul>
+                        </div>
+                        <div class="bg-white p-6 rounded-lg shadow-xl border border-slate-200 transform hover:scale-105 transition-transform duration-300">
+                            <h3 class="text-2xl font-bold mb-3 text-indigo-700">📜 Reglamento Interno – LSSD</h3>
+                            <p class="mb-4 text-slate-700">Estas reglas son de <span class="font-bold">cumplimiento obligatorio</span> para todos los miembros del Los Santos Sheriff Department, sin excepción. Su incumplimiento puede derivar en <span class="font-bold">sanciones, suspensiones o expulsión</span>.</p>
+                            <ul class="list-disc list-inside space-y-2 text-slate-700">
+                                <li>👮 <span class="font-semibold">Comportamiento Profesional:</span> Actúa siempre con ética, respeto y firmeza.</li>
+                                <li>🧥 <span class="font-semibold">Uniforme Obligatorio:</span> Portar el uniforme designado según rol.</li>
+                                <li>👥 <span class="font-semibold">Trabajo en Binomio:</span> Prohibido patrullar o intervenir solo, salvo autorización.</li>
+                                <li>🔫 <span class="font-semibold">Armamento Asignado:</span> Uso limitado al equipo autorizado.</li>
+                                <li>🎧 <span class="font-semibold">Control de Comunicaciones:</span> Uso de radio con “presionar para hablar”, evitar spam.</li>
+                                <li>🚗 <span class="font-semibold">Conducción Responsable:</span> Evitar maniobras arriesgadas, se espera prudencia total.</li>
+                                <li>🕵️‍♂️ <span class="font-semibold">Resguardo de Información:</span> Prohibido divulgar datos confidenciales.</li>
+                                <li>⏱️ <span class="font-semibold">Puntualidad y Compromiso:</span> Respetar horarios de turnos y reuniones.</li>
+                                <li>📋 <span class="font-semibold">Reportes Claros y Completos:</span> Toda actuación con reporte detallado y verídico.</li>
+                                <li>📡 <span class="font-semibold">Comunicación Constante:</span> Mantener contacto regular con la base.</li>
+                                <li>🛠️ <span class="font-semibold">Mantenimiento de Equipamiento:</span> Equipo revisado y conservado en óptimas condiciones.</li>
+                                <li>📏 <span class="font-semibold">Disciplina Jerárquica:</span> Órdenes de superiores acatadas sin objeciones.</li>
+                                <li>🚫 <span class="font-semibold">Prohibido el Uso Indebido de Recursos:</span> No usar vehículos, armas o instalaciones para fines personales.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Sección de Requisitos de Ingreso -->
+                <section id="requisitos" class="page-section">
+                    <h2 class="text-4xl font-extrabold mb-4 text-slate-900 border-b-4 border-indigo-600 pb-2">Requisitos de Ingreso al LSSD ✅</h2>
+                    <p class="text-lg text-slate-700 mb-6">Para formar parte del Los Santos Sheriff Department, deberás cumplir con los siguientes criterios. Buscamos oficiales comprometidos, responsables y con vocación de servicio que deseen unirse a nuestra facción legal.</p>
+                    <div class="space-y-8">
+                        <div class="bg-white p-6 rounded-lg shadow-xl border border-slate-200 transform hover:scale-105 transition-transform duration-300">
+                            <h3 class="text-2xl font-bold mb-3 text-indigo-700">🎙️ Requisitos Técnicos y de Rol</h3>
+                            <ul class="list-disc list-inside space-y-2 text-slate-700">
+                                <li><span class="font-semibold">Micrófono funcional:</span> Indispensable para comunicaciones claras y efectivas.</li>
+                                <li><span class="font-semibold">Capacidad de roleo inmersivo:</span> Interpretar tu personaje de forma realista y coherente.</li>
+                                <li><span class="font-semibold">Conocimiento de normativas:</span> Familiaridad con las reglas del servidor y protocolos del LSSD.</li>
+                            </ul>
+                        </div>
+                        <div class="bg-white p-6 rounded-lg shadow-xl border border-slate-200 transform hover:scale-105 transition-transform duration-300">
+                            <h3 class="text-2xl font-bold mb-3 text-indigo-700">🧾 Historial y Legalidad</h3>
+                            <ul class="list-disc list-inside space-y-2 text-slate-700">
+                                <li><span class="font-semibold">Historial limpio:</span> No se aceptarán postulantes con antecedentes graves o sanciones activas en el servidor.</li>
+                                <li><span class="font-semibold">Licencias obligatorias:</span> Se requiere Licencia de Conducir Clase B y Licencia de Armas vigente.</li>
+                            </ul>
+                        </div>
+                        <div class="bg-white p-6 rounded-lg shadow-xl border border-slate-200 transform hover:scale-105 transition-transform duration-300">
+                            <h3 class="text-2xl font-bold mb-3 text-indigo-700">⏰ Compromiso y Actitud</h3>
+                            <ul class="list-disc list-inside space-y-2 text-slate-700">
+                                <li><span class="font-semibold">Disponibilidad horaria mínima:</span> Al menos 5 horas semanales.</li>
+                                <li><span class="font-semibold">Actitud profesional y respeto:</span> Trabajo en equipo, seriedad en el rol y trato respetuoso.</li>
+                                <li><span class="font-semibold">Capacidad de reacción:</span> Actuar de forma rápida y adecuada en situaciones críticas.</li>
+                                <li><span class="font-semibold">Rol constante:</span> Participación activa en escenas, patrullajes y dinámicas policiales.</li>
+                            </ul>
+                            <p class="text-sm text-slate-600 mt-4 text-center">🔗 <span class="font-semibold">Normativas LosSantosRP:</span> Consulta las reglas y directrices oficiales del servidor en el siguiente enlace: <a href="https://docs.google.com/document/d/1d6iLS2xQyjF-VAI9qUrekbdKS0vOvEE0MIqAJC6Mpfw/edit?usp=sharing" target="_blank" class="text-indigo-600 hover:underline">Normativas LosSantosRP</a></p>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const navLinks = document.querySelectorAll('.nav-link');
+            const pageSections = document.querySelectorAll('.page-section');
+            const menuButton = document.getElementById('menuButton');
+            const sidebar = document.getElementById('sidebar');
+
+            const tenCodes = [
+                { code: "10-1", meaning: "Comunicación no clara / Señal débil" },
+                { code: "10-2", meaning: "Comunicación clara / Señal fuerte" },
+                { code: "10-3", meaning: "Cancelar transmisión / Silencio" },
+                { code: "10-4", meaning: "Afirmativo / Recibido" },
+                { code: "10-5", meaning: "Repetir mensaje" },
+                { code: "10-6", meaning: "Ocupado (pero disponible)" },
+                { code: "10-7", meaning: "Fuera de servicio" },
+                { code: "10-8", meaning: "En servicio / Disponible" },
+                { code: "10-9", meaning: "Repita último mensaje" },
+                { code: "10-10", meaning: "Fuera de servicio temporalmente" },
+                { code: "10-11", meaning: "Informe de tráfico sospechoso" },
+                { code: "10-12", meaning: "Presencia de civiles / espectadores" },
+                { code: "10-13", meaning: "Oficial necesita apoyo urgente" },
+                { code: "10-14", meaning: "Transporte de prisionero" },
+                { code: "10-15", meaning: "Sospechoso bajo custodia" },
+                { code: "10-16", meaning: "Transporte de evidencia" },
+                { code: "10-17", meaning: "Solicita información adicional" },
+                { code: "10-18", meaning: "Responder lo más rápido posible" },
+                { code: "10-19", meaning: "Regresar a la estación" },
+                { code: "10-20", meaning: "Ubicación actual" },
+                { code: "10-21", meaning: "Llamar por teléfono" },
+                { code: "10-22", meaning: "Cancelar última acción / Ignore" },
+                { code: "10-23", meaning: "En la escena" },
+                { code: "10-24", meaning: "Escena concluida / Procedimiento cerrado" },
+                { code: "10-25", meaning: "Reunión con otra unidad" },
+                { code: "10-26", meaning: "Asunto resuelto" },
+                { code: "10-27", meaning: "Solicitar licencia / antecedentes" },
+                { code: "10-28", meaning: "Solicitar información de matrícula" },
+                { code: "10-29", meaning: "Solicitar verificación de registros" },
+                { code: "10-30", meaning: "Uso indebido de radio" },
+                { code: "10-31", meaning: "Robo en progreso" },
+                { code: "10-32", meaning: "Solicita respaldo (indicar unidades)" },
+                { code: "10-33", meaning: "Emergencia – Radio prioritaria" },
+                { code: "10-34", meaning: "Disturbio reportado" },
+                { code: "10-35", meaning: "Información confidencial" },
+                { code: "10-36", meaning: "Hora actual" },
+                { code: "10-37", meaning: "Vehículo sospechoso" },
+                { code: "10-38", meaning: "Parada de tráfico" },
+                { code: "10-39", meaning: "Uso de sirena y luces" },
+                { code: "10-40", meaning: "Sin sirena ni luces" },
+                { code: "10-41", meaning: "Inicio de turno" },
+                { code: "10-42", meaning: "Fin de turno" },
+                { code: "10-43", meaning: "Información disponible" },
+                { code: "10-44", meaning: "Solicita supervisor" },
+                { code: "10-45", meaning: "Accidente reportado" },
+                { code: "10-50", meaning: "Accidente vehicular (leve o grave)" },
+                { code: "10-51", meaning: "Solicita grúa" },
+                { code: "10-52", meaning: "Solicita unidad médica" },
+                { code: "10-53", meaning: "Unidad médica en camino" },
+                { code: "10-55", meaning: "Sospechoso bajo influencia (alcohol/drogas)" },
+                { code: "10-57", meaning: "Persecución" },
+                { code: "10-60", meaning: "Llamada sospechosa" },
+                { code: "10-61", meaning: "Contacto con víctima/testigo" },
+                { code: "10-62", meaning: "Contacto con sospechoso" },
+                { code: "10-65", meaning: "Persona desaparecida" },
+                { code: "10-66", meaning: "Sospechoso armado" },
+                { code: "10-70", meaning: "Incendio en progreso" },
+                { code: "10-71", meaning: "Tiroteo reportado" },
+                { code: "10-72", meaning: "Explosión reportada" },
+                { code: "10-73", meaning: "Reporte de disturbios" },
+                { code: "10-80", meaning: "Persecución vehicular activa" },
+                { code: "10-81", meaning: "Seguimiento encubierto" },
+                { code: "10-82", meaning: "Rodeando área" },
+                { code: "10-85", meaning: "Unidad de apoyo en camino" },
+                { code: "10-86", meaning: "Supervisión en escena" },
+                { code: "10-87", meaning: "Unidad K9 solicitada" },
+                { code: "10-88", meaning: "Unidad aérea solicitada" },
+                { code: "10-90", meaning: "Alarma activada" },
+                { code: "10-91", meaning: "Animal peligroso" },
+                { code: "10-95", meaning: "Sospechoso detenido" },
+                { code: "10-96", meaning: "Individuo con problemas mentales" },
+                { code: "10-97", meaning: "Unidad en camino a la escena" },
+                { code: "10-98", meaning: "Escena asegurada" },
+                { code: "10-99", meaning: "Oficial en emergencia – TODAS las unidades respondan 🚨" }
+            ];
+
+            const codesListContainer = document.getElementById('codesList');
+            const searchInput = document.getElementById('searchInput');
+
+            function displayCodes(codes) {
+                codesListContainer.innerHTML = '';
+                if (codes.length === 0) {
+                    codesListContainer.innerHTML = `<p class="text-slate-500 col-span-full text-center py-4">No se encontraron códigos que coincidan con la búsqueda.</p>`;
+                    return;
+                }
+                codes.forEach(code => {
+                    const codeEl = document.createElement('div');
+                    codeEl.className = 'bg-white p-4 rounded-lg shadow-md border border-slate-200 hover:shadow-lg transition-shadow duration-200';
+                    codeEl.innerHTML = `
+                        <p class="font-bold text-lg text-indigo-600">${code.code}</p>
+                        <p class="text-slate-700">${code.meaning}</p>
+                    `;
+                    codesListContainer.appendChild(codeEl);
+                });
+            }
+            
+            searchInput.addEventListener('input', (e) => {
+                const searchTerm = e.target.value.toLowerCase();
+                const filteredCodes = tenCodes.filter(code => 
+                    code.code.toLowerCase().includes(searchTerm) || 
+                    code.meaning.toLowerCase().includes(searchTerm)
+                );
+                displayCodes(filteredCodes);
+            });
+
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const targetId = link.getAttribute('href');
+
+                    navLinks.forEach(navLink => navLink.classList.remove('active'));
+                    link.classList.add('active');
+
+                    pageSections.forEach(section => {
+                        if (`#${section.id}` === targetId) {
+                            section.classList.add('active');
+                            section.scrollTop = 0; 
+                        } else {
+                            section.classList.remove('active');
+                        }
+                    });
+                    // Close sidebar on link click for mobile
+                    if (window.innerWidth < 1024) {
+                        sidebar.classList.remove('open');
+                    }
+                });
+            });
+
+            menuButton.addEventListener('click', () => {
+                sidebar.classList.toggle('open');
+            });
+
+            displayCodes(tenCodes);
+        });
+    </script>
+</body>
+</html>
